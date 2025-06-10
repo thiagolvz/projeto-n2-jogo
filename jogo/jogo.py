@@ -5,6 +5,7 @@ import time
 import copy
 import sys
 
+
 # Initialize Pygame
 pygame.init()
 
@@ -38,6 +39,10 @@ YELLOW = (255, 255, 0)        # Amarelo para destacar jogadas obrigatórias
 display = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Jogo de Damas')
 clock = pygame.time.Clock()
+
+painel_bg = pygame.image.load('assets/tabuleiro.png')
+painel_bg = pygame.transform.scale(painel_bg, (200, 600))  # largura e altura do painel lateral
+
 
 # Initialize fonts once for performance
 small_font = pygame.font.Font('fonts/Fonte2.ttf', 14)
@@ -558,6 +563,12 @@ class Game:
         return True
 
     def draw(self):
+        if painel_bg:
+          display.blit(painel_bg, (600, 0))  # Aplica no painel lateral direito
+        else:
+          pygame.draw.rect(display, (54, 54, 54), (600, 0, 200, 600))  # fallback com BG_COLOR
+
+        
         for row in range(8):
             for col in range(8):
                 color = BOARD_WHITE if (row + col) % 2 == 0 else BOARD_BLACK
@@ -732,73 +743,88 @@ def show_credits():
     return 'menu' # Retorna um sinal para o menu principal continuar
 
 def show_rules():
-    """Exibe a tela de regras do jogo."""
+    """Exibe a tela de regras com tamanhos e cores personalizados."""
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                # Retorna um sinal para o menu principal sair
                 return 'quit'
             if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
-                running = False # Apenas sai deste loop para voltar ao menu
+                running = False
 
-        display.fill(BLACK)
-
+        display.fill(BLACK)  # Fundo preto
+        
+        # Configurações de fontes
+        title_font = pygame.font.Font('fonts/Fonte2.ttf', 32)  # Fonte do título
+        section_font = pygame.font.Font('fonts/Fonte2.ttf', 26) # Fonte para seções
+        rule_font = pygame.font.Font('fonts/Fonte2.ttf', 20)   # Fonte para regras
+        tip_font = pygame.font.Font('fonts/Fonte2.ttf', 18)    # Fonte para dicas
+        return_font = pygame.font.Font('fonts/Fonte2.ttf', 20) # Fonte para retorno
+        
+        # Cores personalizadas
+        title_color = (255, 215, 0)    # Dourado
+        section_color = (100, 200, 255) # Azul claro
+        rule_color = (200, 200, 255)    # Azul muito claro
+        tip_color = (144, 238, 144)     # Verde claro
+        return_color = (255, 105, 180)  # Rosa
+        
+        # Desenha o título
+        title_surf = title_font.render("Regras do Jogo de Damas", True, title_color)
+        title_rect = title_surf.get_rect(center=(WIDTH//2, 30))
+        display.blit(title_surf, title_rect)
+        
+        # Lista de regras com tipos (para aplicar formatação diferente)
         rules = [
-            "Regras do Jogo de Damas:",
-            "",
-            "1. Damas é jogado em um tabuleiro 8x8 com 64 casas.",
-            "2. O objetivo é capturar todas as peças do oponente ou bloquear seus movimentos.",
-            "3. As peças comuns se movem na diagonal para frente, uma casa por vez.",
-            "4. Quando uma peça alcança a última fileira do oponente, ela se torna uma dama (rei).",
-            "5. As damas podem se mover e capturar tanto para frente quanto para trás na diagonal,",
-            "   em qualquer número de casas vazias.",
-            "6. Capturar é obrigatório! Se uma peça pode capturar, ela deve fazê-lo.",
-            "   (Não há a regra do 'sopro' - peças com capturas obrigatórias são destacadas em amarelo).",
-            "7. Duas ou mais peças juntas na mesma diagonal não podem ser capturadas em um único movimento.",
-            "8. Capturas múltiplas podem ser encadeadas: se uma peça puder capturar novamente após um salto,",
-            "   ela deve fazê-lo na mesma vez.",
-            "9. Uma peça ameaçada é aquela que pode ser capturada no próximo turno do oponente.",
-            "",
-            "Dicas de Jogo:",
-            "  - Clique em uma peça para selecioná-la. Seus movimentos válidos serão destacados em verde.",
-            "  - Se nada acontecer ao clicar em uma peça, ela pode não ter movimentos válidos ou não é sua vez.",
-            "",
-            "Aperte qualquer tecla ou clique para retornar ao menu"
+            ("OBJETIVO", "section", 70),
+            ("Capturar todas as peças do oponente ou bloquear seus movimentos.", "rule", 100),
+            ("", "space", 120),
+            
+            ("MOVIMENTAÇÃO", "section", 150),
+            ("Peças comuns movem-se na diagonal, uma casa por vez.", "rule", 180),
+            ("Damas (reis) movem-se em qualquer direção diagonal.", "rule", 210),
+            ("Capturas são obrigatórias quando possíveis.", "rule", 240),
+            ("", "space", 260),
+            
+            ("DICAS", "section", 290),
+            ("Clique em uma peça para selecioná-la.", "tip", 320),
+            ("Movimentos válidos são destacados em verde.", "tip", 350),
+            ("Peças com capturas obrigatórias são destacadas em amarelo.", "tip", 380),
+            ("", "space", 400),
+            
+            ("Aperte qualquer tecla ou clique para retornar ao menu", "return", 450)
         ]
         
-        for i, rule in enumerate(rules):
-            color = WHITE
-            font_to_use = small_font
-            if i == 0:
-                font_to_use = medium_font
-            elif i > 0 and i < 12: # Regras principais
-                color = BLUE
-            elif "Dicas de Jogo:" in rule: # Título da seção de dicas
-                font_to_use = medium_font
-            elif "Aperte" in rule:
-                color = LIGHT_GREEN
-
-            text_surf, text_rect = text_objects(rule, font_to_use, color)
-            # Ajusta a posição para ser legível e o mais centralizada possível
-            text_rect.x = 20 # Alinha à esquerda
-            text_rect.y = 20 + i * 25 # Espaçamento vertical
+        # Renderiza todas as regras
+        for text, rule_type, y_pos in rules:
+            if rule_type == "section":
+                text_surf = section_font.render(text, True, section_color)
+            elif rule_type == "rule":
+                text_surf = rule_font.render(text, True, rule_color)
+            elif rule_type == "tip":
+                text_surf = tip_font.render(text, True, tip_color)
+            elif rule_type == "return":
+                text_surf = return_font.render(text, True, return_color)
+            else:  # space
+                continue
+                
+            text_rect = text_surf.get_rect(center=(WIDTH//2, y_pos))
             display.blit(text_surf, text_rect)
 
         pygame.display.update()
-        clock.tick(60)
-    return 'menu' # Retorna um sinal para o menu principal continuar
+        clock.tick(30)
+    return 'menu'
 
-def show_winner(winner):
-    """Exibe a tela do vencedor após o término de um jogo."""
-    running = True
-    while running:
+def show_winner(winner, display):
+    """Exibe a tela do vencedor e retorna quando o usuário quiser voltar ao menu"""
+    clock = pygame.time.Clock()
+    
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit() # Sai da aplicação se a janela for fechada
+                sys.exit()
             if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
-                running = False # Retorna ao menu em qualquer tecla ou clique
+                return 'menu'  # Retorna explicitamente para o menu
 
         display.fill(BLACK)
         
@@ -806,7 +832,7 @@ def show_winner(winner):
             text_surf, text_rect = text_objects("EMPATE!", vencedor_font, WHITE)
         elif winner == "x":
             text_surf, text_rect = text_objects("ROSA GANHOU!", vencedor_font, PINK)
-        else: # winner == "o"
+        else:  # winner == "o"
             text_surf, text_rect = text_objects("AZUL GANHOU!", vencedor_font, BLUE)
 
         text_rect.center = (WIDTH//2, HEIGHT//3)
@@ -821,37 +847,40 @@ def show_winner(winner):
         pygame.display.update()
         clock.tick(15)
 
-def game_loop(vs_computer=False):
-    """Função do loop principal do jogo."""
-    game = Game(vs_computer)
+"""def game_loop(display, clock, WIDTH, HEIGHT, vs_computer=False):
+    game = Game(vs_computer=vs_computer)
     running = True
-
+    
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return 'quit' # Sinaliza para o main_menu que é para sair do jogo
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if game.status == 'Playing' and not game.computer_turn_active: # Permite clique humano apenas se não for o turno ativo da IA
-                    game.evaluate_click(event.pos)
+                pygame.quit()
+                sys.exit()
+            
             if event.type == pygame.KEYDOWN:
-                pass # Nenhuma ação imediata no game_loop para keydown/mouseup
-
-        # Lógica do turno do computador
-        # A IA só joga se o jogo estiver em andamento, for o modo vs computador,
-        # a flag 'computer_turn_active' estiver ativada e o timer tiver expirado.
-        if game.status == 'Playing' and game.vs_computer and game.computer_turn_active:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                    
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Botão esquerdo do mouse
+                    pos = pygame.mouse.get_pos()
+                    if pos[0] < 600:  # Verifica se o clique foi no tabuleiro
+                        game.evaluate_click(pos)
+        
+        # Verifica se é o turno do computador
+        if game.vs_computer and game._current_player_char == game.computer_player:
             if game.ai_move_timer and pygame.time.get_ticks() >= game.ai_move_timer:
-                game.computer_move() # Esta chamada agora lida com todos os saltos consecutivos da IA
-                # A lógica de desativar computer_turn_active e resetar o timer está agora dentro de computer_move
-                # para garantir que só ocorra após toda a sequência de movimentos da IA.
-
-        display.fill(BG_COLOR)
+                game.computer_move()
+            elif not game.ai_move_timer:
+                game.computer_move()
+        
+        # Desenha o jogo
+        display.fill((54, 54, 54))  # BG_COLOR
         game.draw()
-        pygame.display.update()
-        clock.tick(60) # Limita a taxa de quadros a 60 FPS
-
-        # Verifica o status do jogo após cada atualização (movimento do jogador ou IA)
-        if game.status == 'Game Over':
-            show_winner(game.check_winner())
-            running = False # Sai do loop do jogo para retornar ao menu principal
-    return 'menu' # Sinaliza para voltar ao menu
+        
+        # Verifica se o jogo terminou
+        winner = game.check_winner()
+        if winner is not None:
+            show_winner(winner)
+            pygame.time.wait(2000)  # Pequena pausa antes de voltar ao menu
+            return winner"""
