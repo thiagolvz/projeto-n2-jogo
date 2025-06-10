@@ -40,9 +40,9 @@ pygame.display.set_caption('Jogo de Damas')
 clock = pygame.time.Clock()
 
 # Initialize fonts once for performance
-small_font = pygame.font.Font('fonts/Porra.ttf', 14)
-medium_font = pygame.font.Font('fonts/Porra.ttf', 13)
-large_font = pygame.font.Font('fonts/Porra.ttf', 18)
+small_font = pygame.font.Font('fonts/Fonte2.ttf', 14)
+medium_font = pygame.font.Font('fonts/Fonte2.ttf', 13)
+large_font = pygame.font.Font('fonts/Fonte2.ttf', 18)
 title_font = pygame.font.Font('fonts/MinhaFonte.ttf', 70)
 vencedor_font = pygame.font.Font('fonts/MinhaFonte.ttf', 50)
 
